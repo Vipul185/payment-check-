@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Image + Location Capture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+      text-align: center;
+    }
+
+    .title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .location-box {
+      margin-top: 12px;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      border: 1px dashed #e2e8f0;
+    }
+
+    video, img {
+      width: 100%;
+      margin-top: 12px;
+      border-radius: 12px;
+      max-height: 260px;
+      object-fit: cover;
+      background: black;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="title">Upload Image</div>
+    <div class="subtitle">Camera & GPS will be captured automatically</div>
+
+    <button class="btn" id="uploadBtn">Upload Image</button>
+
+    <div class="status" id="statusText"></div>
+
+    <video id="video" class="hidden" autoplay playsinline></video>
+    <img id="photoPreview" class="hidden">
+
+    <div class="location-box hidden" id="locationBox">
+      <strong>Location:</strong>
+      <div id="locationText"></div>
+    </div>
+
+    <input type="hidden" id="imageData">
+  </div>
+
+  <script>
+    const uploadBtn = document.getElementById("uploadBtn");
+    const statusText = document.getElementById("statusText");
+    const video = document.getElementById("video");
+    const photoPreview = document.getElementById("photoPreview");
+    const locationBox = document.getElementById("locationBox");
+    const locationText = document.getElementById("locationText");
+    const imageDataInput = document.getElementById("imageData");
+
+    let stream;
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+    }
+
+    function getLocation() {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            resolve({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              acc: pos.coords.accuracy
+            });
+          },
+          err => reject(err),
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      });
+    }
+
+    uploadBtn.addEventListener("click", async () => {
+      statusText.textContent = "Requesting camera permission...";
+
+      try {
+        // Open camera
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.classList.remove("hidden");
+
+        // Wait for camera to be ready
+        await new Promise(r => setTimeout(r, 1200));
+
+        // Auto capture image
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0);
+
+        const imageBase64 = canvas.toDataURL("image/png");
+        imageDataInput.value = imageBase64;
+
+        photoPreview.src = imageBase64;
+        photoPreview.classList.remove("hidden");
+
+        stopCamera();
+        video.classList.add("hidden");
+
+        statusText.textContent = "Photo captured. Getting location...";
+
+        // Get GPS
+        const loc = await getLocation();
+        locationText.textContent =
+          `Lat: ${loc.lat.toFixed(5)}, Lng: ${loc.lng.toFixed(5)} (±${Math.round(loc.acc)}m)`;
+
+        locationBox.classList.remove("hidden");
+        statusText.textContent = "Image & location captured successfully.";
+
+      } catch (err) {
+        statusText.textContent = "Permission denied or device error.";
+        stopCamera();
+      }
+    });
+  </script>
+
+</body>
+</html>
